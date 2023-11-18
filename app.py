@@ -1,4 +1,3 @@
-from openai import OpenAI
 import streamlit as st
 import os
 from openai import AzureOpenAI
@@ -13,7 +12,7 @@ client = AzureOpenAI(
 )
 
 if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-35-turbo-0613"
+    st.session_state["openai_model"] = "gpt-35-turbo"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -30,6 +29,7 @@ if prompt := st.chat_input("What is up?"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
+        
         for response in client.chat.completions.create(
             model=st.session_state["openai_model"],
             messages=[
