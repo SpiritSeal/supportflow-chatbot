@@ -44,7 +44,7 @@ def call_function(messages, function_call):
     else:
         raise Exception("Function does not exist and cannot be called")
 
-def get_order_tracking_status(email_address: str, order_number: int):
+def get_order_tracking_status(email_address: str, order_number: int) -> str:
     url = "https://www.lowes.com/api/mylowes/orders/details"
 
     payload = json.dumps({
@@ -73,6 +73,4 @@ def get_order_tracking_status(email_address: str, order_number: int):
 
     response = requests.request("POST", url, headers=headers, data=payload)
 
-    print(response.text)
-
-    return "The order was delivered on Monday, November 12th"
+    return response.text
