@@ -19,13 +19,27 @@ functions = [
                     "description": "The email address associated with the order"
                 },
                 "order_number": {
-                    "type": "string",
-                    "description": "The order number. For online orders, this starts with either the letter W or C. "
-                                   "For in-store orders, this starts with the letter H. You can find your order "
-                                   "number in your confirmation email or your receipt."
+                    "type": "integer",
+                    "description": "The order number."
                 },
             },
-            "required": ["email_address, order_number"]
+            "required": ["email_address", "order_number"]
+        }
+    },
+    {
+        "name": "refer_to_human_agent",
+        "description": "Use this to refer the customer's question to a human agent. You should only call this "
+                       "function if you don't know how to answer the inquiry?.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "conversation_summary": {
+                    "type": "string",
+                    "description": "A short summary of the current conversation so the agent can quickly get up to "
+                                   "speed. Make sure you include all relevant details. "
+                },
+            },
+            "required": ["conversation_summary"]
         }
     }
 ]
@@ -40,8 +54,8 @@ if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-35-turbo"
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "You are a helpful customer support agent for "
-                                                               "The Home Depot. Be as helpful as possible and call "
+    st.session_state.messages = [{"role": "system", "content": "You are a helpful customer support agent for Lowes."
+                                                               "Be as helpful as possible and call "
                                                                "functions when necessary."},]
 
 for message in st.session_state.messages:
@@ -85,15 +99,20 @@ if prompt := st.chat_input("How can we help you today?"):
                             func_call["name"] = delta.function_call.name
                         if delta.function_call.arguments is not None:
                             func_call["arguments"] += delta.function_call.arguments
-                    if response.choices[0].finish_reason == "function_call" and func_call["name"] is not None:
-                        print(f"Function generation requested, calling function")
-                        function_response = call_function(st.session_state.messages, func_call)
-                        print("function response")
-                        print(function_response)
-                        st.session_state.messages.append(function_response)
-                        called_function = True
 
                     message_placeholder.markdown(full_message + "▌")
+
+            if func_call["name"] is not None:
+                print(f"Function generation requested, calling function")
+                function_response = call_function(st.session_state.messages, func_call)
+                print("function response")
+                print(function_response)
+                st.session_state.messages.append(function_response)
+                called_function = True
+                func_call = {
+                    "name": None,
+                    "arguments": "",
+                }
 
         message_placeholder.markdown(full_message)
 
