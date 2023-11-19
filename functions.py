@@ -17,12 +17,19 @@ def call_function(messages, function_call):
                 function_call["arguments"]
             )
             print("Looking up order status")
-            results = get_lookup_order_status(parsed_output["email_address"], parsed_output["order_number"])
-            return {
-                "role": "function",
-                "name": function_call["name"],
-                "content": str(results),
-            }
+            if parsed_output["email_address"] == "colin.flueck@gmail.com" or parsed_output["email_address"] == "colinflueck@gmail.com":
+                results = get_lookup_order_status(parsed_output["email_address"], parsed_output["order_number"])
+                return {
+                    "role": "function",
+                    "name": function_call["name"],
+                    "content": str(results),
+                }
+            else:
+                return {
+                    "role": "function",
+                    "name": function_call["name"],
+                    "content": "I'm sorry we couldn't find any orders with that information, please have the customer double check their input."
+                }
         except Exception as e:
             # print(parsed_output)
             print(f"Function execution failed")
