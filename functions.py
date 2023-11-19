@@ -185,5 +185,5 @@ def get_product_listing(sku: str):
     return response.text
 
 
-def refer_to_human_agent(summary: str) -> str:
-    return "I'm sorry, I don't know how to help you with that. I'll refer you to a human agent."
+def refer_to_human_agent(summary: str):
+    return {"role": "function", "content": summary, "name": "refer_to_human_agent"}

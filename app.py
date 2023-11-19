@@ -83,7 +83,11 @@ if "openai_model" not in st.session_state:
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": "You are a helpful customer support agent for The Home "
-                                                               "Depot. Your goal is to answer as many questions as possible without escalating to a human agent."},]
+                                                               "Depot. Your goal is to answer as many questions as "
+                                                               "possible without escalating to a human agent. "
+                                                               "However, if necessary, you can refer the customer to "
+                                                               "a human agent if you do not know the answer to their "
+                                                               "question. For example, you can help users track their orders, but you **cannot** help with returns."},]
 
 for message in st.session_state.messages:
     if message["role"] == "assistant" or message["role"] == "user":
@@ -133,31 +137,35 @@ if prompt := st.chat_input("How can we help you today?"):
             print(function_response)
             st.session_state.messages.append(function_response)
 
-            message_placeholder = st.empty()
-            full_message = ""
+            if function_response["name"] is not None and function_response["name"] == "refer_to_human_agent":
+                print("connect to human agent")
+                st.info('You will be connected with an agent shortly', icon="ℹ️")
+            else:
+                message_placeholder = st.empty()
+                full_message = ""
 
-            for response in client.chat.completions.create(
-                    model=st.session_state["openai_model"],
-                    messages=[
-                        {"role": m["role"], "content": m["content"], "name": m["name"]} if "name" in m else
-                        {"role": m["role"], "content": m["content"]}
-                        for m in st.session_state.messages
-                    ],
-                    functions=functions,
-                    function_call="auto",
-                    stream=True,
-            ):
-                if len(response.choices) > 0:
-                    delta = response.choices[0].delta
+                for response in client.chat.completions.create(
+                        model=st.session_state["openai_model"],
+                        messages=[
+                            {"role": m["role"], "content": m["content"], "name": m["name"]} if "name" in m else
+                            {"role": m["role"], "content": m["content"]}
+                            for m in st.session_state.messages
+                        ],
+                        functions=functions,
+                        function_call="auto",
+                        stream=True,
+                ):
+                    if len(response.choices) > 0:
+                        delta = response.choices[0].delta
 
-                    full_message += (delta.content or "")
-                    if delta.function_call is not None:
-                        if delta.function_call.name is not None:
-                            func_call["name"] = delta.function_call.name
-                        if delta.function_call.arguments is not None:
-                            func_call["arguments"] += delta.function_call.arguments
+                        full_message += (delta.content or "")
+                        if delta.function_call is not None:
+                            if delta.function_call.name is not None:
+                                func_call["name"] = delta.function_call.name
+                            if delta.function_call.arguments is not None:
+                                func_call["arguments"] += delta.function_call.arguments
 
-                    message_placeholder.markdown(full_message + "")
+                        message_placeholder.markdown(full_message + "")
 
         message_placeholder.markdown(full_message)
 
