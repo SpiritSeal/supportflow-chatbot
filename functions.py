@@ -186,4 +186,4 @@ def get_product_listing(sku: str):
 
 
 def refer_to_human_agent(summary: str):
-    return {"role": "function", "content": summary, "name": "refer_to_human_agent"}
+    return summary

@@ -3,6 +3,8 @@ import os
 from openai import AzureOpenAI
 
 from functions import call_function
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 st.title("SupportFlow Demo")
 # when will my order be delivered?, colin.flueck@gmail.com W123123
@@ -72,6 +74,14 @@ functions = [
     }
 ]
 
+cred = credentials.Certificate("supportflow-4851d-firebase-adminsdk-cdrzu-bf620a4b52.json")
+try:
+    app = firebase_admin.initialize_app(cred)
+except Exception:
+    pass
+
+db = firestore.client()
+
 client = AzureOpenAI(
     api_key=os.environ['OPENAI_API_KEY'],
     api_version="2023-07-01-preview",
@@ -139,7 +149,14 @@ if prompt := st.chat_input("How can we help you today?"):
 
             if function_response["name"] is not None and function_response["name"] == "refer_to_human_agent":
                 print("connect to human agent")
+                print(function_response["name"])
                 st.info('You will be connected with an agent shortly', icon="ℹ️")
+
+                # Get the document to update
+                doc_ref = db.collection('handoffs').document('conversation')
+
+                # Update the document
+                doc_ref.update({'summary': str(function_response["content"]), 'message_history': st.session_state.messages})
             else:
                 message_placeholder = st.empty()
                 full_message = ""
